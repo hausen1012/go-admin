@@ -1,0 +1,364 @@
+<template>
+  <el-container class="layout-container">
+    <el-aside width="240px" class="aside">
+      <div class="logo">
+        <span>后台管理系统</span>
+      </div>
+      <el-menu
+        :router="true"
+        :default-active="$route.path"
+        class="el-menu-vertical"
+        :collapse-transition="false"
+      >
+        <el-menu-item index="/">
+          <el-icon><HomeFilled /></el-icon>
+          <span>首页</span>
+        </el-menu-item>
+        <el-menu-item v-if="userStore.isAdmin" index="/users">
+          <el-icon><UserFilled /></el-icon>
+          <span>用户管理</span>
+        </el-menu-item>
+      </el-menu>
+    </el-aside>
+    <el-container>
+      <el-header class="header">
+        <div class="header-content">
+          <div class="header-left">
+            <el-breadcrumb separator="/">
+              <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+              <el-breadcrumb-item>{{ currentRoute }}</el-breadcrumb-item>
+            </el-breadcrumb>
+          </div>
+          <div class="header-right">
+            <el-dropdown @command="handleCommand" trigger="click">
+              <span class="user-dropdown">
+                <el-avatar :size="32" class="user-avatar">
+                  {{ userStore.user?.username?.charAt(0)?.toUpperCase() }}
+                </el-avatar>
+                <span class="username">{{ userStore.user?.username }}</span>
+                <el-icon><ArrowDown /></el-icon>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="changePassword">
+                    <el-icon><Key /></el-icon>修改密码
+                  </el-dropdown-item>
+                  <el-dropdown-item command="logout">
+                    <el-icon><SwitchButton /></el-icon>退出登录
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </div>
+      </el-header>
+      <el-main>
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </el-main>
+    </el-container>
+
+    <!-- 修改密码弹窗 -->
+    <el-dialog
+      v-model="passwordDialogVisible"
+      title="修改密码"
+      width="400px"
+      :close-on-click-modal="false"
+    >
+      <el-form
+        ref="passwordFormRef"
+        :model="passwordForm"
+        :rules="passwordRules"
+        label-width="100px"
+      >
+        <el-form-item label="原密码" prop="oldPassword">
+          <el-input
+            v-model="passwordForm.oldPassword"
+            type="password"
+            show-password
+            placeholder="请输入原密码"
+          />
+        </el-form-item>
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input
+            v-model="passwordForm.newPassword"
+            type="password"
+            show-password
+            placeholder="请输入新密码"
+          />
+        </el-form-item>
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input
+            v-model="passwordForm.confirmPassword"
+            type="password"
+            show-password
+            placeholder="请再次输入新密码"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="passwordDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleChangePassword">确认</el-button>
+        </span>
+      </template>
+    </el-dialog>
+  </el-container>
+</template>
+
+<script setup>
+import { useUserStore } from '@/stores/user'
+import { useRouter, useRoute } from 'vue-router'
+import { HomeFilled, UserFilled, ArrowDown, SwitchButton, Key } from '@element-plus/icons-vue'
+import { computed, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+
+const userStore = useUserStore()
+const router = useRouter()
+const route = useRoute()
+
+const currentRoute = computed(() => {
+  const routeMap = {
+    '/': '首页',
+    '/users': '用户管理'
+  }
+  return routeMap[route.path] || '未知页面'
+})
+
+const passwordDialogVisible = ref(false)
+const passwordFormRef = ref(null)
+const passwordForm = ref({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+const validateConfirmPassword = (rule, value, callback) => {
+  if (value !== passwordForm.value.newPassword) {
+    callback(new Error('两次输入的密码不一致'))
+  } else {
+    callback()
+  }
+}
+
+const passwordRules = {
+  oldPassword: [
+    { required: true, message: '请输入原密码', trigger: 'blur' },
+    { min: 5, message: '密码长度不能小于5位', trigger: 'blur' }
+  ],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 5, message: '密码长度不能小于5位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    { validator: validateConfirmPassword, trigger: 'blur' }
+  ]
+}
+
+const handleCommand = (command) => {
+  if (command === 'logout') {
+    userStore.logout()
+    router.push('/login')
+  } else if (command === 'changePassword') {
+    passwordDialogVisible.value = true
+  }
+}
+
+const handleChangePassword = async () => {
+  if (!passwordFormRef.value) return
+  
+  await passwordFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        await userStore.updatePassword(
+          passwordForm.value.oldPassword,
+          passwordForm.value.newPassword
+        )
+        ElMessage.success('密码修改成功')
+        passwordDialogVisible.value = false
+        passwordForm.value = {
+          oldPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        }
+      } catch (error) {
+        ElMessage.error(error.message || '密码修改失败')
+      }
+    }
+  })
+}
+</script>
+
+<style scoped>
+.layout-container {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.aside {
+  background: #fff;
+  border-right: 1px solid #e5e6eb;
+  box-shadow: none;
+  padding: 0;
+  min-width: 220px;
+}
+
+.logo {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.logo span {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1976d2;
+  letter-spacing: 2px;
+}
+
+.el-menu-vertical {
+  background: #fff;
+  border-right: none;
+  min-height: calc(100vh - 64px);
+  padding-top: 8px;
+}
+
+.el-menu-vertical :deep(.el-menu-item),
+.el-menu-vertical :deep(.el-sub-menu__title) {
+  height: 44px;
+  line-height: 44px;
+  border-radius: 8px;
+  margin: 4px 12px;
+  color: #222;
+  font-size: 15px;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.el-menu-vertical :deep(.el-menu-item.is-active),
+.el-menu-vertical :deep(.el-sub-menu.is-opened > .el-sub-menu__title) {
+  background: #e8f3ff !important;
+  color: #1976d2 !important;
+}
+
+.el-menu-vertical :deep(.el-menu-item:hover),
+.el-menu-vertical :deep(.el-sub-menu__title:hover) {
+  background: #f4f6fa !important;
+  color: #1976d2;
+}
+
+.el-menu-vertical :deep(.el-icon) {
+  font-size: 18px;
+  margin-right: 6px;
+  color: #1976d2;
+}
+
+.el-menu-vertical :deep(.el-menu-item-group__title) {
+  display: none;
+}
+
+.aside {
+  border-radius: 12px 0 0 12px;
+  overflow: hidden;
+}
+
+.header {
+  background-color: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 0 20px;
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  height: 60px;
+  line-height: 60px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.user-dropdown {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  height: 48px;
+  border-radius: 24px;
+  transition: all 0.3s;
+}
+
+.user-dropdown:hover {
+  background: rgba(0, 0, 0, 0.025);
+}
+
+.user-avatar {
+  background-color: #1890ff;
+  color: #fff;
+  font-weight: 500;
+}
+
+.username {
+  margin: 0 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+:deep(.el-dropdown-menu__item) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+:deep(.el-breadcrumb__inner) {
+  font-weight: 500;
+}
+
+:deep(.el-main) {
+  padding: 0;
+  background-color: #f5f7fa;
+}
+
+:deep(.el-menu) {
+  border-right: none;
+}
+
+:deep(.el-menu-item) {
+  margin: 4px 16px;
+}
+
+:deep(.el-menu-item.is-active) {
+  background-color: #1890ff;
+}
+</style> 

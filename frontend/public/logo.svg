@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景框 -->
+  <rect width="128" height="128" rx="24" fill="#3498DB"/>
+  
+  <!-- 图形元素：表示管理系统的图形 -->
+  <rect x="28" y="28" width="72" height="16" rx="4" fill="white"/>
+  <rect x="28" y="52" width="72" height="16" rx="4" fill="white" opacity="0.9"/>
+  <rect x="28" y="76" width="72" height="16" rx="4" fill="white" opacity="0.8"/>
+  
+  <!-- 控制元素：代表管理和控制功能 -->
+  <circle cx="88" cy="36" r="6" fill="#27AE60"/>
+  <circle cx="88" cy="60" r="6" fill="#F1C40F"/>
+  <circle cx="88" cy="84" r="6" fill="#E74C3C"/>
+  
+  <!-- 代表用户的图标 -->
+  <circle cx="45" cy="36" r="5" stroke="white" stroke-width="2"/>
+  <path d="M38 60 C38 56 42 52 45 52 C48 52 52 56 52 60" stroke="white" stroke-width="2" fill="none"/>
+  <circle cx="45" cy="84" r="5" stroke="white" stroke-width="2"/>
+  <path d="M38 108 C38 104 42 100 45 100 C48 100 52 104 52 108" stroke="white" stroke-width="2" fill="none"/>
+</svg> 

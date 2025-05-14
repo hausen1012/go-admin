@@ -1,0 +1,140 @@
+<template>
+  <div class="settings-container">
+    <el-card>
+      <template #header>
+        <div class="card-header">
+          <span>系统设置</span>
+        </div>
+      </template>
+
+      <el-form
+        v-loading="loading"
+        :model="settings"
+        label-width="120px"
+        class="settings-form"
+      >
+        <!-- 系统名称 -->
+        <el-form-item label="系统名称">
+          <el-input
+            v-model="settings.system_name"
+            placeholder="请输入系统名称"
+            @change="value => handleSettingChange('system_name', value)"
+          />
+          <span class="form-item-tip">设置系统的显示名称（最多6个字符）</span>
+        </el-form-item>
+
+        <!-- 系统描述 -->
+        <el-form-item label="系统描述">
+          <el-input
+            v-model="settings.system_description"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入系统描述"
+            @change="value => handleSettingChange('system_description', value)"
+          />
+          <span class="form-item-tip">简要描述系统的用途和功能</span>
+        </el-form-item>
+
+        <!-- 允许注册 -->
+        <el-form-item label="允许新用户注册">
+          <el-switch
+            v-model="settings.allow_registration"
+            @change="value => handleSettingChange('allow_registration', value.toString())"
+          />
+          <span class="form-item-tip">开启后允许新用户自行注册账号</span>
+        </el-form-item>
+      </el-form>
+    </el-card>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import axios from 'axios'
+import { useSystemStore } from '@/stores/system'
+
+const loading = ref(false)
+const systemStore = useSystemStore()
+const settings = ref({
+  system_name: '',
+  system_description: '',
+  allow_registration: false
+})
+
+// 获取系统配置
+const fetchSettings = async () => {
+  try {
+    loading.value = true
+    const response = await axios.get('/api/admin/options')
+    const options = response.data
+    
+    // 将配置数据转换为表单数据
+    options.forEach(option => {
+      if (option.option_name === 'system_name') {
+        settings.value.system_name = option.option_value
+      } else if (option.option_name === 'system_description') {
+        settings.value.system_description = option.option_value
+      } else if (option.option_name === 'allow_registration') {
+        settings.value.allow_registration = option.option_value === 'true'
+      }
+    })
+  } catch (error) {
+    ElMessage.error('获取系统配置失败')
+    console.error('获取系统配置失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 更新配置
+const handleSettingChange = async (optionName, value) => {
+  try {
+    loading.value = true
+    await axios.put(`/api/admin/options/${optionName}`, {
+      option_value: value
+    })
+    
+    // 更新 store 中的配置
+    if (optionName === 'system_name') {
+      systemStore.systemName = value
+    } else if (optionName === 'system_description') {
+      systemStore.systemDescription = value
+    } else if (optionName === 'allow_registration') {
+      systemStore.allowRegistration = value === 'true'
+    }
+    
+    ElMessage.success('设置更新成功')
+  } catch (error) {
+    ElMessage.error('设置更新失败')
+    console.error('设置更新失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchSettings()
+})
+</script>
+
+<style scoped>
+.settings-container {
+  padding: 20px;
+}
+
+.settings-form {
+  max-width: 800px;
+}
+
+.form-item-tip {
+  display: block;
+  margin-top: 4px;
+  color: #909399;
+  font-size: 13px;
+}
+
+:deep(.el-form-item) {
+  margin-bottom: 24px;
+}
+</style> 
