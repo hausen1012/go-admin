@@ -2,24 +2,14 @@ version: '3.8'
 
 services:
   app:
-    container_name: go-demo-app
+    container_name: go-admin
     build: .
     ports:
-      - "8080:8080"
+      - "9876:80"
     volumes:
       - ./data:/app/data
     env_file:
       - .env
     environment:
-      - SERVER_ADDRESS=:8080
-      - ALLOW_REGISTRATION=true
-      - DATABASE_PATH=/data/app.db
+      - DATA_PATH=./data
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 1G
-        reservations:
-          cpus: '0.5'
-          memory: 512M 
