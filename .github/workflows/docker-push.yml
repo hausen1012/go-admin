@@ -40,9 +40,6 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
-            type=sha,prefix={{date 'YYYYMMDD'}}-
-            type=ref,event=tag
-            type=ref,event=branch
 
       - name: 打包并推送
         uses: docker/build-push-action@v4
