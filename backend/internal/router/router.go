@@ -23,9 +23,7 @@ func SetupRouter(db *sql.DB, cfg *config.Config) *gin.Engine {
 	{
 		public.POST("/login", h.Login)
 		public.GET("/registration-status", h.GetRegistrationStatus)
-		if cfg.AllowRegistration {
-			public.POST("/register", h.Register)
-		}
+		public.POST("/register", h.Register)
 	}
 
 	// 需要认证的路由

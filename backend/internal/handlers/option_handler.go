@@ -89,10 +89,5 @@ func (h *Handler) UpdateOption(c *gin.Context) {
 		return
 	}
 
-	// 如果更新的是注册设置，同步更新配置
-	if optionName == models.OptionAllowRegistration {
-		h.cfg.AllowRegistration = req.OptionValue == "true"
-	}
-
 	c.JSON(http.StatusOK, gin.H{"message": "配置更新成功"})
 } 

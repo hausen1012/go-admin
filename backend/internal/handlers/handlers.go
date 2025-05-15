@@ -66,7 +66,15 @@ func (h *Handler) Login(c *gin.Context) {
 }
 
 func (h *Handler) Register(c *gin.Context) {
-	if !h.cfg.AllowRegistration {
+	// 从数据库查询是否允许注册
+	var allowRegistration string
+	err := h.db.QueryRow("SELECT option_value FROM options WHERE option_name = ?", models.OptionAllowRegistration).Scan(&allowRegistration)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取注册配置失败"})
+		return
+	}
+
+	if allowRegistration != "true" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "注册功能已禁用"})
 		return
 	}
@@ -147,8 +155,15 @@ func (h *Handler) Logout(c *gin.Context) {
 }
 
 func (h *Handler) GetRegistrationStatus(c *gin.Context) {
+	var allowRegistration string
+	err := h.db.QueryRow("SELECT option_value FROM options WHERE option_name = ?", models.OptionAllowRegistration).Scan(&allowRegistration)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取注册配置失败"})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"allowRegistration": h.cfg.AllowRegistration,
+		"allowRegistration": allowRegistration == "true",
 	})
 }
 

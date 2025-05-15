@@ -35,7 +35,7 @@ var DefaultOptions = []Option{
 	},
 	{
 		OptionName:  OptionAllowRegistration,
-		OptionValue: "true",
+		OptionValue: "false",
 		AutoLoad:    true,
 		Description: "是否允许新用户注册",
 	},
