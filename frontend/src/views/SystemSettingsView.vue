@@ -10,7 +10,8 @@
       <el-form
         v-loading="loading"
         :model="settings"
-        label-width="120px"
+        label-width="auto"
+        :label-position="'right'"
         class="settings-form"
       >
         <!-- 系统名称 -->
@@ -36,7 +37,7 @@
         </el-form-item>
 
         <!-- 允许注册 -->
-        <el-form-item label="允许新用户注册">
+        <el-form-item label="允许注册">
           <el-switch
             v-model="settings.allow_registration"
             @change="value => handleSettingChange('allow_registration', value.toString())"
@@ -132,9 +133,26 @@ onMounted(() => {
   margin-top: 4px;
   color: #909399;
   font-size: 13px;
+  width: 100%;
+  clear: both;
 }
 
 :deep(.el-form-item) {
   margin-bottom: 24px;
+}
+
+:deep(.el-form-item__label) {
+  padding-right: 12px;
+  align-self: flex-start;
+  margin-top: 0;
+  line-height: 28px;
+}
+
+:deep(.el-form-item__content) {
+  flex-wrap: wrap;
+}
+
+:deep(.el-input__wrapper) {
+  margin-top: 0;
 }
 </style> 
