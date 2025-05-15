@@ -2,6 +2,16 @@
 
 一个基于 Go + Vue 3 的后台管理系统，支持用户注册、登录、密码修改等功能。
 
+## 界面预览
+
+![登录页面](docs/images/login.png)
+
+![首页](docs/images/home.png)
+
+![用户管理](docs/images/user.png)
+
+![设置](docs/images/setting.png)
+
 ## 功能特点
 
 - 用户认证（登录、注册、登出）
@@ -37,7 +47,7 @@
 docker-compose up -d
 ```
 
-4. 访问 http://localhost:8080
+4. 访问 http://localhost:9876
 
 ### 默认管理员账户
 
@@ -86,33 +96,7 @@ npm run dev
 
 - `SERVER_ADDRESS`: 服务器监听地址（默认：:8080）
 - `JWT_SECRET`: JWT 密钥
-- `ALLOW_REGISTRATION`: 是否允许用户注册（默认：true）
-- `DATABASE_PATH`: 数据库文件路径
-
-## 项目结构
-
-```
-.
-├── backend/                # 后端代码
-│   ├── internal/          # 内部包
-│   │   ├── config/       # 配置管理
-│   │   ├── database/     # 数据库操作
-│   │   ├── handlers/     # HTTP 处理器
-│   │   ├── middleware/   # 中间件
-│   │   └── models/       # 数据模型
-│   └── main.go           # 主程序入口
-├── frontend/              # 前端代码
-│   ├── src/              # 源代码
-│   │   ├── assets/       # 静态资源
-│   │   ├── components/   # 组件
-│   │   ├── router/       # 路由配置
-│   │   ├── stores/       # 状态管理
-│   │   └── views/        # 页面
-│   └── package.json      # 依赖配置
-├── Dockerfile            # Docker 构建文件
-├── docker-compose.yml    # Docker Compose 配置
-└── README.md            # 项目说明
-```
+- `DATA_PATH`: 数据库文件路径
 
 ## 许可证
 
