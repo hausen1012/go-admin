@@ -3,7 +3,7 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>用户管理</span>
+          <span class="title">用户管理</span>
           <div class="header-right">
             <el-input
               v-model="searchQuery"
@@ -22,25 +22,27 @@
       </template>
 
       <el-table :data="paginatedUsers" style="width: 100%" v-loading="loading">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="username" label="用户名" />
-        <el-table-column prop="is_admin" label="管理员" width="100">
+        <el-table-column prop="id" label="ID" width="80" :min-width="50" />
+        <el-table-column prop="username" label="用户名" :min-width="100" />
+        <el-table-column prop="is_admin" label="管理员" width="100" :min-width="80">
           <template #default="{ row }">
             <el-tag :type="row.is_admin ? 'danger' : 'info'">
               {{ row.is_admin ? '是' : '否' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" label="创建时间" width="180">
+        <el-table-column prop="created_at" label="创建时间" width="180" :min-width="120" class-name="hide-on-mobile">
           <template #default="{ row }">
             {{ new Date(row.created_at).toLocaleString() }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="250">
+        <el-table-column label="操作" width="250" :min-width="120">
           <template #default="{ row }">
-            <el-link type="primary" @click="handleEdit(row)" style="margin-right: 8px;">编辑</el-link>
-            <el-link type="primary" @click="handleResetPassword(row)" style="margin-right: 8px;">重置密码</el-link>
-            <el-link type="danger" @click="handleDelete(row)">删除</el-link>
+            <div class="action-buttons">
+              <el-link type="primary" @click="handleEdit(row)" style="margin-right: 8px;">编辑</el-link>
+              <el-link type="primary" @click="handleResetPassword(row)" style="margin-right: 8px;">重置密码</el-link>
+              <el-link type="danger" @click="handleDelete(row)">删除</el-link>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -281,5 +283,82 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+@media screen and (max-width: 768px) {
+  .users-container {
+    padding: 10px;
+  }
+  
+  .header-right .el-input {
+    width: 180px !important;
+    margin-right: 10px !important;
+  }
+  
+  .pagination-container {
+    justify-content: center;
+  }
+  
+  :deep(.hide-on-mobile) {
+    display: none;
+  }
+  
+  .title {
+    display: none;
+  }
+  
+  .card-header {
+    justify-content: flex-end;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  
+  .header-right {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .header-right .el-input {
+    flex: 1;
+    margin-right: 10px !important;
+  }
+  
+  .header-right .el-button {
+    width: auto;
+  }
+  
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: flex-start;
+  }
+  
+  .action-buttons .el-link {
+    margin-right: 0 !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  :deep(.el-table) {
+    font-size: 12px;
+  }
+  
+  :deep(.el-table .cell) {
+    padding: 0 5px;
+  }
+  
+  :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 }
 </style> 

@@ -2,7 +2,7 @@
   <div class="home-container">
     <!-- 系统监控卡片 -->
     <el-row :gutter="20">
-      <el-col :xs="24" :sm="12" :md="6" v-for="(card, index) in monitorCards" :key="index">
+      <el-col :xs="24" :sm="12" :md="12" :lg="6" v-for="(card, index) in monitorCards" :key="index">
         <el-card class="monitor-card" :body-style="{ padding: '20px' }">
           <div class="card-content">
             <el-icon class="card-icon" :class="card.colorClass">
@@ -26,7 +26,7 @@
               <span>服务器信息</span>
             </div>
           </template>
-          <el-descriptions :column="2" border>
+          <el-descriptions :column="descriptionColumns" border>
             <el-descriptions-item label="操作系统">{{ serverInfo.os }}</el-descriptions-item>
             <el-descriptions-item label="运行环境">{{ serverInfo.environment }}</el-descriptions-item>
             <el-descriptions-item label="服务器类型">{{ serverInfo.serverType }}</el-descriptions-item>
@@ -41,10 +41,21 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import {
   User, Timer, Monitor, Cpu
 } from '@element-plus/icons-vue'
+import { useWindowSize } from '@vueuse/core'
+
+// 窗口尺寸响应式
+const { width } = useWindowSize()
+
+// 根据窗口宽度计算描述列数
+const descriptionColumns = computed(() => {
+  if (width.value < 768) return 1
+  if (width.value < 992) return 2
+  return 3
+})
 
 // 监控卡片数据
 const monitorCards = [
@@ -97,6 +108,7 @@ const serverInfo = {
 .monitor-card {
   height: 120px;
   transition: all 0.3s;
+  margin-bottom: 20px;
 }
 
 .monitor-card:hover {
@@ -159,24 +171,89 @@ const serverInfo = {
   align-items: center;
 }
 
-/* 移动端适配 */
+/* 响应式布局适配 */
+@media screen and (max-width: 1200px) {
+  .card-icon {
+    font-size: 42px;
+    margin-right: 15px;
+  }
+  
+  .card-value {
+    font-size: 22px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .home-container {
+    padding: 16px;
+  }
+  
+  .mt-20 {
+    margin-top: 16px;
+  }
+  
+  .monitor-card {
+    height: 110px;
+  }
+}
+
 @media screen and (max-width: 768px) {
   .home-container {
     padding: 12px;
   }
 
   .monitor-card {
+    height: 100px;
     margin-bottom: 12px;
   }
 
   .mt-20 {
     margin-top: 12px;
   }
+  
+  .card-icon {
+    font-size: 36px;
+    margin-right: 12px;
+    padding: 8px;
+  }
+  
+  .card-value {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
 
   .card-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .home-container {
+    padding: 10px;
+  }
+  
+  /* 移除小屏幕下的垂直布局，保持水平排列 */
+  .card-content {
+    flex-direction: row;
+    text-align: left;
+    align-items: center;
+  }
+  
+  .card-icon {
+    margin-right: 12px;
+    margin-bottom: 0;
+    font-size: 32px;
+    padding: 6px;
+  }
+  
+  .card-value {
+    font-size: 18px;
+  }
+  
+  .card-label {
+    font-size: 12px;
   }
 }
 </style>

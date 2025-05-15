@@ -1,10 +1,5 @@
 <template>
   <el-container class="layout-container">
-    <!-- 移动端菜单按钮 -->
-    <div class="mobile-menu-btn" @click="toggleMenu" v-if="isMobile">
-      <el-icon size="24"><Menu /></el-icon>
-    </div>
-
     <!-- 移动端抽屉菜单 -->
     <el-drawer
       v-model="menuVisible"
@@ -75,6 +70,11 @@
       <el-header class="header">
         <div class="header-content">
           <div class="header-left">
+            <div class="menu-btn" @click="toggleMenu" v-if="isMobile">
+              <el-button type="primary" circle>
+                <el-icon><Menu /></el-icon>
+              </el-button>
+            </div>
             <el-breadcrumb separator="/" v-if="!isMobile">
               <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
               <el-breadcrumb-item>{{ currentRoute }}</el-breadcrumb-item>
@@ -464,32 +464,22 @@ const handleChangePassword = async () => {
   background-color: #1890ff;
 }
 
-/* 移动端样式 */
-.mobile-menu-btn {
-  position: fixed;
-  top: 12px;
-  left: 12px;
-  z-index: 100;
-  padding: 8px;
-  background: #fff;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+/* 移动端菜单按钮样式 */
+.menu-btn {
+  margin-right: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.drawer-content {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+.menu-btn :deep(.el-button) {
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
 
-.current-page {
-  font-size: 16px;
-  font-weight: 500;
-  color: #333;
+/* 移除旧的固定菜单按钮样式 */
+.mobile-menu-btn {
+  display: none;
 }
 
 /* 响应式调整 */
@@ -499,7 +489,19 @@ const handleChangePassword = async () => {
   }
 
   .header-content {
-    padding-left: 40px;
+    padding-left: 0;
+  }
+  
+  .current-page {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .drawer-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   .user-dropdown {
