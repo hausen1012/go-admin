@@ -57,6 +57,8 @@ const form = reactive({
 const validatePass = (rule, value, callback) => {
   if (value === '') {
     callback(new Error('请输入密码'))
+  } else if (value.length < 5) {
+    callback(new Error('密码长度不能小于5位'))
   } else {
     if (form.confirmPassword !== '') {
       formRef.value?.validateField('confirmPassword')
