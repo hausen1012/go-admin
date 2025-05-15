@@ -39,9 +39,25 @@
         <el-table-column label="操作" min-width="160" class-name="action-column">
           <template #default="{ row }">
             <div class="action-buttons">
-              <el-link type="primary" @click="handleEdit(row)" style="margin-right: 8px;">编辑</el-link>
-              <el-link type="primary" @click="handleResetPassword(row)" style="margin-right: 8px;">重置密码</el-link>
-              <el-link type="danger" @click="handleDelete(row)">删除</el-link>
+              <el-link 
+                type="primary" 
+                @click="handleEdit(row)" 
+                style="margin-right: 8px;"
+                :disabled="row.username === 'admin'"
+                v-if="row.username !== 'admin'"
+              >编辑</el-link>
+              <el-link 
+                type="primary" 
+                @click="handleResetPassword(row)" 
+                style="margin-right: 8px;"
+                v-if="row.username !== 'admin' || (row.username === 'admin' && isCurrentUserAdmin)"
+              >重置密码</el-link>
+              <el-link 
+                type="danger" 
+                @click="handleDelete(row)"
+                :disabled="row.username === 'admin'"
+                v-if="row.username !== 'admin'"
+              >删除</el-link>
             </div>
           </template>
         </el-table-column>
@@ -251,6 +267,11 @@ const handleResetPassword = async (row) => {
 const handleSearch = () => {
   // 搜索逻辑已通过计算属性实现
 }
+
+// 添加计算属性来判断当前用户是否为admin
+const isCurrentUserAdmin = computed(() => {
+  return userStore.user?.username === 'admin'
+})
 
 onMounted(() => {
   fetchUsers()

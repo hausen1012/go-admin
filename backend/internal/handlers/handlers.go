@@ -211,6 +211,18 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		return
 	}
 
+	// 检查是否为admin用户
+	var username string
+	err = h.db.QueryRow("SELECT username FROM users WHERE id = ?", id).Scan(&username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		return
+	}
+	if username == "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "不能修改admin用户"})
+		return
+	}
+
 	var req struct {
 		Username string `json:"username"`
 		IsAdmin  bool   `json:"is_admin"`
@@ -237,6 +249,18 @@ func (h *Handler) DeleteUser(c *gin.Context) {
 		return
 	}
 
+	// 检查是否为admin用户
+	var username string
+	err = h.db.QueryRow("SELECT username FROM users WHERE id = ?", id).Scan(&username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		return
+	}
+	if username == "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "不能删除admin用户"})
+		return
+	}
+
 	_, err = h.db.Exec("DELETE FROM users WHERE id = ?", id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除用户失败"})
@@ -251,6 +275,23 @@ func (h *Handler) ResetUserPassword(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的用户ID"})
 		return
+	}
+
+	// 检查是否为admin用户
+	var username string
+	err = h.db.QueryRow("SELECT username FROM users WHERE id = ?", id).Scan(&username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		return
+	}
+
+	// 如果是admin用户，检查当前操作的用户是否为admin本人
+	if username == "admin" {
+		currentUser := c.MustGet("user").(*models.User)
+		if currentUser.Username != "admin" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "只有admin本人可以重置自己的密码"})
+			return
+		}
 	}
 
 	// 生成随机密码
