@@ -1,11 +1,12 @@
 package models
 
 type Option struct {
-	ID          int64  `json:"id"`
-	OptionName  string `json:"option_name"`
-	OptionValue string `json:"option_value"`
-	AutoLoad    bool   `json:"auto_load"` // 是否自动加载
-	Description string `json:"description"`
+	ID              int64  `json:"id"`
+	OptionName      string `json:"option_name"`
+	OptionValue     string `json:"option_value"`
+	AutoLoad        bool   `json:"auto_load"` // 是否自动加载
+	Description     string `json:"description"`
+	ReturnToFrontend bool  `json:"return_to_frontend"` // 是否返回给前端
 }
 
 type UpdateOptionRequest struct {
@@ -26,21 +27,24 @@ const (
 // 默认系统配置
 var DefaultOptions = []Option{
 	{
-		OptionName:  OptionSystemInitialized,
-		OptionValue: "false",
-		AutoLoad:    true,
-		Description: "系统是否已完成初始化",
+		OptionName:       OptionSystemInitialized,
+		OptionValue:      "false",
+		AutoLoad:         true,
+		Description:      "系统是否已完成初始化",
+		ReturnToFrontend: false,
 	},
 	{
-		OptionName:  OptionAllowRegistration,
-		OptionValue: "false",
-		AutoLoad:    true,
-		Description: "是否允许新用户注册",
+		OptionName:       OptionAllowRegistration,
+		OptionValue:      "false",
+		AutoLoad:         true,
+		Description:      "是否允许新用户注册",
+		ReturnToFrontend: true,
 	},
 	{
-		OptionName:  OptionSystemName,
-		OptionValue: "后台管理系统",
-		AutoLoad:    true,
-		Description: "系统名称",
+		OptionName:       OptionSystemName,
+		OptionValue:      "后台管理系统",
+		AutoLoad:         true,
+		Description:      "系统名称",
+		ReturnToFrontend: true,
 	},
 } 

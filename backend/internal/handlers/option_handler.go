@@ -9,8 +9,9 @@ import (
 // 获取所有系统配置
 func (h *Handler) GetOptions(c *gin.Context) {
 	rows, err := h.db.Query(`
-		SELECT id, option_name, option_value, auto_load, description
+		SELECT id, option_name, option_value, auto_load, description, return_to_frontend
 		FROM options
+		WHERE return_to_frontend = true
 		ORDER BY id ASC`)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取系统配置失败"})
@@ -27,6 +28,7 @@ func (h *Handler) GetOptions(c *gin.Context) {
 			&option.OptionValue,
 			&option.AutoLoad,
 			&option.Description,
+			&option.ReturnToFrontend,
 		)
 		if err != nil {
 			continue
@@ -43,7 +45,7 @@ func (h *Handler) GetOption(c *gin.Context) {
 	
 	var option models.Option
 	err := h.db.QueryRow(`
-		SELECT id, option_name, option_value, auto_load, description
+		SELECT id, option_name, option_value, auto_load, description, return_to_frontend
 		FROM options
 		WHERE option_name = ?`,
 		optionName,
@@ -53,9 +55,16 @@ func (h *Handler) GetOption(c *gin.Context) {
 		&option.OptionValue,
 		&option.AutoLoad,
 		&option.Description,
+		&option.ReturnToFrontend,
 	)
 
 	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "配置项不存在"})
+		return
+	}
+
+	// 如果配置项不允许返回给前端，返回 404
+	if !option.ReturnToFrontend {
 		c.JSON(http.StatusNotFound, gin.H{"error": "配置项不存在"})
 		return
 	}

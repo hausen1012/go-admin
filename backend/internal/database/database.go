@@ -59,6 +59,7 @@ func createTables(db *sql.DB) error {
 			option_value TEXT NOT NULL,
 			auto_load BOOLEAN NOT NULL DEFAULT 1,
 			description TEXT,
+			return_to_frontend BOOLEAN NOT NULL DEFAULT 1,
 			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
@@ -107,9 +108,9 @@ func initDefaultOptions(db *sql.DB) error {
 
 		if count == 0 {
 			_, err = db.Exec(`
-				INSERT INTO options (option_name, option_value, auto_load, description)
-				VALUES (?, ?, ?, ?)`,
-				option.OptionName, option.OptionValue, option.AutoLoad, option.Description)
+				INSERT INTO options (option_name, option_value, auto_load, description, return_to_frontend)
+				VALUES (?, ?, ?, ?, ?)`,
+				option.OptionName, option.OptionValue, option.AutoLoad, option.Description, option.ReturnToFrontend)
 			if err != nil {
 				return err
 			}
