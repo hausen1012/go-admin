@@ -59,10 +59,12 @@ const fetchSettings = async () => {
     
     // 将配置数据转换为表单数据
     options.forEach(option => {
-      if (option.option_name === 'system_name') {
-        settings.value.system_name = option.option_value
-      } else if (option.option_name === 'allow_registration') {
-        settings.value.allow_registration = option.option_value === 'true'
+      if (option.OptionName === 'system_name') {
+        settings.value.system_name = option.OptionValue
+        systemStore.systemName = option.OptionValue
+      } else if (option.OptionName === 'allow_registration') {
+        settings.value.allow_registration = option.OptionValue === 'true'
+        systemStore.allowRegistration = option.OptionValue === 'true'
       }
     })
   } catch (error) {

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"database/sql"
 	"net/http"
 	"strconv"
 	"time"
@@ -11,14 +10,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type Handler struct {
-	db  *sql.DB
+	db  *gorm.DB
 	cfg *config.Config
 }
 
-func NewHandler(db *sql.DB, cfg *config.Config) *Handler {
+func NewHandler(db *gorm.DB, cfg *config.Config) *Handler {
 	return &Handler{db: db, cfg: cfg}
 }
 
@@ -30,9 +30,7 @@ func (h *Handler) Login(c *gin.Context) {
 	}
 
 	var user models.User
-	err := h.db.QueryRow("SELECT id, username, password, is_admin FROM users WHERE username = ?",
-		req.Username).Scan(&user.ID, &user.Username, &user.Password, &user.IsAdmin)
-	if err != nil {
+	if err := h.db.Where("username = ?", req.Username).First(&user).Error; err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
 		return
 	}
@@ -58,23 +56,24 @@ func (h *Handler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"token": tokenString,
 		"user": models.UserResponse{
-			ID:       user.ID,
-			Username: user.Username,
-			IsAdmin:  user.IsAdmin,
+			ID:        user.ID,
+			Username:  user.Username,
+			IsAdmin:   user.IsAdmin,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
 		},
 	})
 }
 
 func (h *Handler) Register(c *gin.Context) {
 	// 从数据库查询是否允许注册
-	var allowRegistration string
-	err := h.db.QueryRow("SELECT option_value FROM options WHERE option_name = ?", models.OptionAllowRegistration).Scan(&allowRegistration)
-	if err != nil {
+	var option models.Option
+	if err := h.db.Where("option_name = ?", models.OptionAllowRegistration).First(&option).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取注册配置失败"})
 		return
 	}
 
-	if allowRegistration != "true" {
+	if option.OptionValue != "true" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "注册功能已禁用"})
 		return
 	}
@@ -91,20 +90,25 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	result, err := h.db.Exec("INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)",
-		req.Username, string(hashedPassword), false)
-	if err != nil {
+	user := models.User{
+		Username: req.Username,
+		Password: string(hashedPassword),
+		IsAdmin:  false,
+	}
+
+	if err := h.db.Create(&user).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "用户名已存在"})
 		return
 	}
 
-	id, _ := result.LastInsertId()
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "注册成功",
 		"user": models.UserResponse{
-			ID:       id,
-			Username: req.Username,
-			IsAdmin:  false,
+			ID:        user.ID,
+			Username:  user.Username,
+			IsAdmin:   user.IsAdmin,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
 		},
 	})
 }
@@ -122,14 +126,15 @@ func (h *Handler) UpdatePassword(c *gin.Context) {
 	}
 
 	user, _ := c.Get("user")
-	var currentPassword string
-	err := h.db.QueryRow("SELECT password FROM users WHERE id = ?", user.(*models.User).ID).Scan(&currentPassword)
-	if err != nil {
+	currentUser := user.(*models.User)
+
+	var dbUser models.User
+	if err := h.db.First(&dbUser, currentUser.ID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(currentPassword), []byte(req.OldPassword)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(req.OldPassword)); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "原密码错误"})
 		return
 	}
@@ -140,8 +145,7 @@ func (h *Handler) UpdatePassword(c *gin.Context) {
 		return
 	}
 
-	_, err = h.db.Exec("UPDATE users SET password = ? WHERE id = ?", string(hashedPassword), user.(*models.User).ID)
-	if err != nil {
+	if err := h.db.Model(&dbUser).Update("password", string(hashedPassword)).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新密码失败"})
 		return
 	}
@@ -150,42 +154,40 @@ func (h *Handler) UpdatePassword(c *gin.Context) {
 }
 
 func (h *Handler) Logout(c *gin.Context) {
-	// JWT是无状态的，客户端只需要删除token即可
 	c.JSON(http.StatusOK, gin.H{"message": "登出成功"})
 }
 
 func (h *Handler) GetRegistrationStatus(c *gin.Context) {
-	var allowRegistration string
-	err := h.db.QueryRow("SELECT option_value FROM options WHERE option_name = ?", models.OptionAllowRegistration).Scan(&allowRegistration)
-	if err != nil {
+	var option models.Option
+	if err := h.db.Where("option_name = ?", models.OptionAllowRegistration).First(&option).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取注册配置失败"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"allowRegistration": allowRegistration == "true",
+		"allowRegistration": option.OptionValue == "true",
 	})
 }
 
 func (h *Handler) ListUsers(c *gin.Context) {
-	rows, err := h.db.Query("SELECT id, username, is_admin, created_at, updated_at FROM users")
-	if err != nil {
+	var users []models.User
+	if err := h.db.Find(&users).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户列表失败"})
 		return
 	}
-	defer rows.Close()
 
-	var users []models.UserResponse
-	for rows.Next() {
-		var user models.UserResponse
-		err := rows.Scan(&user.ID, &user.Username, &user.IsAdmin, &user.CreatedAt, &user.UpdatedAt)
-		if err != nil {
-			continue
-		}
-		users = append(users, user)
+	var response []models.UserResponse
+	for _, user := range users {
+		response = append(response, models.UserResponse{
+			ID:        user.ID,
+			Username:  user.Username,
+			IsAdmin:   user.IsAdmin,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		})
 	}
 
-	c.JSON(http.StatusOK, users)
+	c.JSON(http.StatusOK, response)
 }
 
 func (h *Handler) CreateUser(c *gin.Context) {
@@ -201,39 +203,44 @@ func (h *Handler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	result, err := h.db.Exec("INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)",
-		req.Username, string(hashedPassword), false)
-	if err != nil {
+	user := models.User{
+		Username: req.Username,
+		Password: string(hashedPassword),
+		IsAdmin:  false,
+	}
+
+	if err := h.db.Create(&user).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "用户名已存在"})
 		return
 	}
 
-	id, _ := result.LastInsertId()
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "用户创建成功",
 		"user": models.UserResponse{
-			ID:       id,
-			Username: req.Username,
-			IsAdmin:  false,
+			ID:        user.ID,
+			Username:  user.Username,
+			IsAdmin:   user.IsAdmin,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
 		},
 	})
 }
 
 func (h *Handler) UpdateUser(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的用户ID"})
 		return
 	}
 
-	// 检查是否为admin用户
-	var username string
-	err = h.db.QueryRow("SELECT username FROM users WHERE id = ?", id).Scan(&username)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+	var user models.User
+	if err := h.db.First(&user, uint(id)).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
 		return
 	}
-	if username == "admin" {
+
+	if user.Username == "admin" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "不能修改admin用户"})
 		return
 	}
@@ -247,37 +254,48 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	_, err = h.db.Exec("UPDATE users SET username = ?, is_admin = ? WHERE id = ?",
-		req.Username, req.IsAdmin, id)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新用户失败"})
+	updates := map[string]interface{}{
+		"username": req.Username,
+		"is_admin": req.IsAdmin,
+	}
+
+	if err := h.db.Model(&user).Updates(updates).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新用户信息失败"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "用户更新成功"})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "用户信息更新成功",
+		"user": models.UserResponse{
+			ID:        user.ID,
+			Username:  user.Username,
+			IsAdmin:   user.IsAdmin,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		},
+	})
 }
 
 func (h *Handler) DeleteUser(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的用户ID"})
 		return
 	}
 
-	// 检查是否为admin用户
-	var username string
-	err = h.db.QueryRow("SELECT username FROM users WHERE id = ?", id).Scan(&username)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+	var user models.User
+	if err := h.db.First(&user, uint(id)).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
 		return
 	}
-	if username == "admin" {
+
+	if user.Username == "admin" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "不能删除admin用户"})
 		return
 	}
 
-	_, err = h.db.Exec("DELETE FROM users WHERE id = ?", id)
-	if err != nil {
+	if err := h.db.Delete(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除用户失败"})
 		return
 	}
@@ -286,45 +304,75 @@ func (h *Handler) DeleteUser(c *gin.Context) {
 }
 
 func (h *Handler) ResetUserPassword(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的用户ID"})
 		return
 	}
 
-	// 检查是否为admin用户
-	var username string
-	err = h.db.QueryRow("SELECT username FROM users WHERE id = ?", id).Scan(&username)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+	var user models.User
+	if err := h.db.First(&user, uint(id)).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
 		return
 	}
 
-	// 如果是admin用户，检查当前操作的用户是否为admin本人
-	if username == "admin" {
-		currentUser := c.MustGet("user").(*models.User)
-		if currentUser.Username != "admin" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "只有admin本人可以重置自己的密码"})
-			return
-		}
-	}
-
-	// 生成随机密码
-	newPassword := "123456" // 在实际应用中应该生成随机密码
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	// 设置默认的重置密码
+	defaultPassword := "123456"
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(defaultPassword), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "密码加密失败"})
 		return
 	}
 
-	_, err = h.db.Exec("UPDATE users SET password = ? WHERE id = ?", string(hashedPassword), id)
-	if err != nil {
+	if err := h.db.Model(&user).Update("password", string(hashedPassword)).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "重置密码失败"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "密码重置成功",
-		"password": newPassword,
+		"password": defaultPassword,
 	})
+}
+
+func (h *Handler) GetOptions(c *gin.Context) {
+	var options []models.Option
+	if err := h.db.Where("return_to_frontend = ?", true).Find(&options).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取配置列表失败"})
+		return
+	}
+	c.JSON(http.StatusOK, options)
+}
+
+func (h *Handler) GetOption(c *gin.Context) {
+	name := c.Param("name")
+	var option models.Option
+	if err := h.db.Where("option_name = ? AND return_to_frontend = ?", name, true).First(&option).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "配置项不存在"})
+		return
+	}
+	c.JSON(http.StatusOK, option)
+}
+
+func (h *Handler) UpdateOption(c *gin.Context) {
+	name := c.Param("name")
+	var option models.Option
+	if err := h.db.Where("option_name = ?", name).First(&option).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "配置项不存在"})
+		return
+	}
+
+	var req models.UpdateOptionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求数据"})
+		return
+	}
+
+	if err := h.db.Model(&option).Update("option_value", req.OptionValue).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新配置失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "配置更新成功"})
 } 

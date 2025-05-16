@@ -2,15 +2,17 @@ package models
 
 import (
 	"time"
+	"gorm.io/gorm"
 )
 
 type User struct {
-	ID        int64     `json:"id"`
-	Username  string    `json:"username"`
-	Password  string    `json:"-"` // 不在JSON中显示密码
-	IsAdmin   bool      `json:"is_admin"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        uint           `gorm:"primarykey"`
+	Username  string         `gorm:"uniqueIndex;not null"`
+	Password  string         `gorm:"not null"`
+	IsAdmin   bool          `gorm:"default:false"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type LoginRequest struct {
@@ -29,7 +31,7 @@ type UpdatePasswordRequest struct {
 }
 
 type UserResponse struct {
-	ID        int64     `json:"id"`
+	ID        uint      `json:"id"`
 	Username  string    `json:"username"`
 	IsAdmin   bool      `json:"is_admin"`
 	CreatedAt time.Time `json:"created_at"`

@@ -1,15 +1,15 @@
 package router
 
 import (
-	"database/sql"
 	"backend/internal/config"
 	"backend/internal/handlers"
 	"backend/internal/middleware"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-func SetupRouter(db *sql.DB, cfg *config.Config) *gin.Engine {
+func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	r := gin.Default()
 
 	// 创建处理器

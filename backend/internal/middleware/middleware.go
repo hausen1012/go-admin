@@ -52,7 +52,7 @@ func Auth(jwtSecret string) gin.HandlerFunc {
 		}
 
 		user := &models.User{
-			ID:       int64(claims["id"].(float64)),
+			ID:       uint(claims["id"].(float64)),
 			Username: claims["username"].(string),
 			IsAdmin:  claims["is_admin"].(bool),
 		}

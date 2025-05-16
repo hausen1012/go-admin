@@ -1,21 +1,28 @@
 package models
 
+import (
+	"time"
+	"gorm.io/gorm"
+)
+
 type Option struct {
-	ID              int64  `json:"id"`
-	OptionName      string `json:"option_name"`
-	OptionValue     string `json:"option_value"`
-	AutoLoad        bool   `json:"auto_load"` // 是否自动加载
-	Description     string `json:"description"`
-	ReturnToFrontend bool  `json:"return_to_frontend"` // 是否返回给前端
+	ID              uint           `gorm:"primarykey"`
+	OptionName      string         `gorm:"uniqueIndex;not null"`
+	OptionValue     string         `gorm:"not null"`
+	AutoLoad        bool           `gorm:"default:true"`
+	Description     string
+	ReturnToFrontend bool          `gorm:"default:true"`
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	DeletedAt       gorm.DeletedAt `gorm:"index"`
 }
 
 type UpdateOptionRequest struct {
 	OptionValue string `json:"option_value" binding:"required"`
 }
 
-// 系统配置的键名常量
+// 系统选项常量
 const (
-	// 系统初始化标志
 	OptionSystemInitialized = "system_initialized"
 	// 用户注册设置
 	OptionAllowRegistration = "allow_registration"
@@ -24,13 +31,13 @@ const (
 	// 其他设置可以继续添加...
 )
 
-// 默认系统配置
+// DefaultOptions 默认系统选项
 var DefaultOptions = []Option{
 	{
 		OptionName:       OptionSystemInitialized,
 		OptionValue:      "false",
 		AutoLoad:         true,
-		Description:      "系统是否已完成初始化",
+		Description:      "系统是否已初始化",
 		ReturnToFrontend: false,
 	},
 	{

@@ -16,7 +16,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
-	defer db.Close()
+
+	// 获取原生数据库连接以便关闭
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Fatalf("Failed to get underlying database connection: %v", err)
+	}
+	defer sqlDB.Close()
 
 	// 初始化路由
 	r := router.SetupRouter(db, cfg)
