@@ -6,9 +6,9 @@
           <img src="@/assets/logo.svg" alt="Logo" class="logo" />
           <h1>
             <span>欢迎使用</span>
-            <span>后台管理系统</span>
+            <span>{{ systemName }}</span>
           </h1>
-          <p class="description">高效、安全的企业级管理平台</p>
+          <p class="description">简洁、高效、安全的管理平台</p>
         </div>
       </div>
       <div class="right-panel">
@@ -22,7 +22,10 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useUserStore } from '@/stores/user'
 
+const userStore = useUserStore()
+const systemName = ref('后台管理系统')
 const windowWidth = ref(window.innerWidth)
 const breakpointMedium = 992
 const breakpointSmall = 768
@@ -35,8 +38,14 @@ const handleResize = () => {
   windowWidth.value = window.innerWidth
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('resize', handleResize)
+  try {
+    const sysInfo = await userStore.getSysInfo()
+    systemName.value = sysInfo.systemName
+  } catch (error) {
+    console.error('获取系统信息失败:', error)
+  }
 })
 
 onUnmounted(() => {

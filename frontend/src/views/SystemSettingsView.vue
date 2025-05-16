@@ -10,12 +10,14 @@
       <el-form
         v-loading="loading"
         :model="settings"
+        :rules="rules"
+        ref="settingsFormRef"
         label-width="auto"
         :label-position="'right'"
         class="settings-form"
       >
         <!-- 系统名称 -->
-        <el-form-item label="系统名称">
+        <el-form-item label="系统名称" prop="system_name">
           <el-input
             v-model="settings.system_name"
             placeholder="请输入系统名称"
@@ -45,10 +47,19 @@ import { useSystemStore } from '@/stores/system'
 
 const loading = ref(false)
 const systemStore = useSystemStore()
+const settingsFormRef = ref(null)
 const settings = ref({
   system_name: '',
   allow_registration: false
 })
+
+// 表单验证规则
+const rules = {
+  system_name: [
+    { required: true, message: '系统名称不能为空', trigger: 'blur' },
+    { max: 6, message: '系统名称最多6个字符', trigger: 'blur' }
+  ]
+}
 
 // 获取系统配置
 const fetchSettings = async () => {
@@ -78,6 +89,16 @@ const fetchSettings = async () => {
 // 更新配置
 const handleSettingChange = async (optionName, value) => {
   try {
+    // 如果是系统名称，先进行表单验证
+    if (optionName === 'system_name') {
+      try {
+        await settingsFormRef.value.validateField('system_name')
+      } catch (validationError) {
+        // 验证失败，直接返回
+        return
+      }
+    }
+    
     loading.value = true
     await axios.put(`/api/admin/options/${optionName}`, {
       option_value: value

@@ -6,6 +6,7 @@ import (
 	"time"
 	"backend/internal/config"
 	"backend/internal/models"
+	"errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -157,15 +158,29 @@ func (h *Handler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "登出成功"})
 }
 
-func (h *Handler) GetRegistrationStatus(c *gin.Context) {
-	var option models.Option
-	if err := h.db.Where("option_name = ?", models.OptionAllowRegistration).First(&option).Error; err != nil {
+func (h *Handler) GetSysInfo(c *gin.Context) {
+	// 获取注册配置
+	var regOption models.Option
+	if err := h.db.Where("option_name = ?", models.OptionAllowRegistration).First(&regOption).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取注册配置失败"})
 		return
 	}
 
+	// 获取系统名称配置
+	var sysNameOption models.Option
+	sysName := "后台管理系统" // 默认系统名称
+	if err := h.db.Where("option_name = ?", "system_name").First(&sysNameOption).Error; err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "获取系统名称失败"})
+			return
+		}
+	} else {
+		sysName = sysNameOption.OptionValue
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"allowRegistration": option.OptionValue == "true",
+		"allowRegistration": regOption.OptionValue == "true",
+		"systemName":       sysName,
 	})
 }
 

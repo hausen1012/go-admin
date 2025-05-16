@@ -108,13 +108,19 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-    async getRegistrationStatus() {
+    async getSysInfo() {
       try {
-        const response = await axios.get('/api/registration-status')
-        return response.data.allowRegistration
+        const response = await axios.get('/api/sysinfo')
+        return {
+          allowRegistration: response.data.allowRegistration,
+          systemName: response.data.systemName || '后台管理系统'
+        }
       } catch (error) {
-        console.error('获取注册状态失败:', error)
-        return false // 默认不允许注册
+        console.error('获取系统信息失败:', error)
+        return {
+          allowRegistration: false,
+          systemName: '后台管理系统'
+        }
       }
     }
   }

@@ -40,10 +40,16 @@ const formRef = ref(null)
 const loading = ref(false)
 
 onMounted(async () => {
-  // 检查是否允许注册，如果不允许则重定向到登录页面
-  const allowRegistration = await userStore.getRegistrationStatus()
-  if (!allowRegistration) {
-    ElMessage.error('注册功能已禁用')
+  try {
+    // 检查是否允许注册，如果不允许则重定向到登录页面
+    const sysInfo = await userStore.getSysInfo()
+    if (!sysInfo.allowRegistration) {
+      ElMessage.error('注册功能已禁用')
+      router.push('/login')
+    }
+  } catch (error) {
+    console.error('获取系统信息失败:', error)
+    ElMessage.error('获取系统信息失败')
     router.push('/login')
   }
 })

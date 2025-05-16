@@ -48,8 +48,16 @@ const rules = {
 }
 
 onMounted(async () => {
-  // 获取注册状态
-  allowRegistration.value = await userStore.getRegistrationStatus()
+  try {
+    // 获取系统信息
+    const sysInfo = await userStore.getSysInfo()
+    allowRegistration.value = sysInfo.allowRegistration
+    console.log('Registration status:', allowRegistration.value)
+  } catch (error) {
+    console.error('获取系统信息失败:', error)
+    ElMessage.error('获取系统信息失败')
+    allowRegistration.value = false
+  }
 })
 
 const handleLogin = async () => {

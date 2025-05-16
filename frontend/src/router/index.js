@@ -57,12 +57,17 @@ router.beforeEach(async (to, from, next) => {
   } else if (to.meta.requiresAdmin && !userStore.isAdmin) {
     next('/')
   } else if (to.name === 'register') {
-    // 检查是否允许注册
-    const allowRegistration = await userStore.getRegistrationStatus()
-    if (!allowRegistration) {
+    try {
+      // 检查是否允许注册
+      const sysInfo = await userStore.getSysInfo()
+      if (!sysInfo.allowRegistration) {
+        next('/login')
+      } else {
+        next()
+      }
+    } catch (error) {
+      console.error('获取系统信息失败:', error)
       next('/login')
-    } else {
-      next()
     }
   } else {
     next()

@@ -22,7 +22,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	public := r.Group("/api")
 	{
 		public.POST("/login", h.Login)
-		public.GET("/registration-status", h.GetRegistrationStatus)
+		public.GET("/sysinfo", h.GetSysInfo)
 		public.POST("/register", h.Register)
 	}
 

@@ -12,7 +12,7 @@
         <div class="logo">
           <router-link to="/" class="logo-link" @click="closeMenu">
             <img src="/logo.svg" alt="系统logo" class="logo-img" />
-            <span>{{ systemStore.systemName.length > 6 ? systemStore.systemName.substring(0, 6) : systemStore.systemName }}</span>
+            <span>{{ (systemStore.systemName || '后台管理系统').length > 6 ? (systemStore.systemName || '后台管理系统').substring(0, 6) : (systemStore.systemName || '后台管理系统') }}</span>
           </router-link>
         </div>
         <el-menu
@@ -43,7 +43,7 @@
       <div class="logo">
         <router-link to="/" class="logo-link">
           <img src="/logo.svg" alt="系统logo" class="logo-img" />
-          <span>{{ systemStore.systemName.length > 6 ? systemStore.systemName.substring(0, 6) : systemStore.systemName }}</span>
+          <span>{{ (systemStore.systemName || '后台管理系统').length > 6 ? (systemStore.systemName || '后台管理系统').substring(0, 6) : (systemStore.systemName || '后台管理系统') }}</span>
         </router-link>
       </div>
       <el-menu
