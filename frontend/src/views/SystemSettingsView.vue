@@ -3,7 +3,7 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>系统设置</span>
+          <span class="title">系统设置</span>
           <el-button 
             type="primary" 
             @click="handleSaveSettings" 
@@ -185,5 +185,15 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+@media screen and (max-width: 768px) {
+  .title {
+    display: none;
+  }
+  
+  .card-header {
+    justify-content: flex-end;
+  }
 }
 </style> 
