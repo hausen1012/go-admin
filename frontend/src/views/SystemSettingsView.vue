@@ -24,18 +24,6 @@
           <span class="form-item-tip">设置系统的显示名称（最多6个字符）</span>
         </el-form-item>
 
-        <!-- 系统描述 -->
-        <el-form-item label="系统描述">
-          <el-input
-            v-model="settings.system_description"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入系统描述"
-            @change="value => handleSettingChange('system_description', value)"
-          />
-          <span class="form-item-tip">简要描述系统的用途和功能</span>
-        </el-form-item>
-
         <!-- 允许注册 -->
         <el-form-item label="允许注册">
           <el-switch
@@ -59,7 +47,6 @@ const loading = ref(false)
 const systemStore = useSystemStore()
 const settings = ref({
   system_name: '',
-  system_description: '',
   allow_registration: false
 })
 
@@ -74,8 +61,6 @@ const fetchSettings = async () => {
     options.forEach(option => {
       if (option.option_name === 'system_name') {
         settings.value.system_name = option.option_value
-      } else if (option.option_name === 'system_description') {
-        settings.value.system_description = option.option_value
       } else if (option.option_name === 'allow_registration') {
         settings.value.allow_registration = option.option_value === 'true'
       }
@@ -99,8 +84,6 @@ const handleSettingChange = async (optionName, value) => {
     // 更新 store 中的配置
     if (optionName === 'system_name') {
       systemStore.systemName = value
-    } else if (optionName === 'system_description') {
-      systemStore.systemDescription = value
     } else if (optionName === 'allow_registration') {
       systemStore.allowRegistration = value === 'true'
     }

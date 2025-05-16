@@ -20,8 +20,6 @@ const (
 	OptionAllowRegistration = "allow_registration"
 	// 系统名称
 	OptionSystemName = "system_name"
-	// 系统描述
-	OptionSystemDescription = "system_description"
 	// 其他设置可以继续添加...
 )
 
@@ -44,11 +42,5 @@ var DefaultOptions = []Option{
 		OptionValue: "后台管理系统",
 		AutoLoad:    true,
 		Description: "系统名称",
-	},
-	{
-		OptionName:  OptionSystemDescription,
-		OptionValue: "基于Go和Vue的后台管理系统",
-		AutoLoad:    true,
-		Description: "系统描述",
 	},
 } 
