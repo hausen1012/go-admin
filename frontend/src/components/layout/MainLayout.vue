@@ -197,7 +197,7 @@ const closeMenu = () => {
 }
 
 onMounted(() => {
-  systemStore.loadSystemSettings()
+  systemStore.getSysInfo()
 })
 
 const currentRoute = computed(() => {
