@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useSystemStore } from '@/stores/system'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -28,11 +29,6 @@ const router = createRouter({
           component: () => import('@/views/HomeView.vue')
         },
         {
-          path: 'profile',
-          name: 'profile',
-          component: () => import('@/views/ProfileView.vue')
-        },
-        {
           path: 'users',
           name: 'users',
           component: () => import('@/views/UsersView.vue'),
@@ -51,23 +47,17 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
+  const systemStore = useSystemStore()
   
   if (to.meta.requiresAuth && !userStore.isLoggedIn) {
     next('/login')
   } else if (to.meta.requiresAdmin && !userStore.isAdmin) {
     next('/')
   } else if (to.name === 'register') {
-    try {
-      // 检查是否允许注册
-      const sysInfo = await userStore.getSysInfo()
-      if (!sysInfo.allowRegistration) {
-        next('/login')
-      } else {
-        next()
-      }
-    } catch (error) {
-      console.error('获取系统信息失败:', error)
+    if (!systemStore.allowRegistration) {
       next('/login')
+    } else {
+      next()
     }
   } else {
     next()

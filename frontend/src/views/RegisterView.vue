@@ -28,28 +28,26 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useSystemStore } from '@/stores/system'
 import { ElMessage } from 'element-plus'
 import AuthLayout from '@/components/AuthLayout.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
+const systemStore = useSystemStore()
 const formRef = ref(null)
 const loading = ref(false)
 
-onMounted(async () => {
-  try {
-    // 检查是否允许注册，如果不允许则重定向到登录页面
-    const sysInfo = await userStore.getSysInfo()
-    if (!sysInfo.allowRegistration) {
-      ElMessage.error('注册功能已禁用')
-      router.push('/login')
-    }
-  } catch (error) {
-    console.error('获取系统信息失败:', error)
-    ElMessage.error('获取系统信息失败')
+// 使用计算属性获取注册状态
+const allowRegistration = computed(() => systemStore.allowRegistration)
+
+onMounted(() => {
+  // 如果不允许注册，重定向到登录页面
+  if (!allowRegistration.value) {
+    ElMessage.error('注册功能已禁用')
     router.push('/login')
   }
 })

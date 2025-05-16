@@ -9,7 +9,7 @@
             @click="handleSaveSettings" 
             :loading="loading"
           >
-            保存设置
+            保存
           </el-button>
         </div>
       </template>

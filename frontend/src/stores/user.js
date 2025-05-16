@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import { userApi } from '../api/user'
 
 export const useUserStore = defineStore('user', {
   state: () => {
@@ -25,9 +26,9 @@ export const useUserStore = defineStore('user', {
   actions: {
     async login(username, password) {
       try {
-        const response = await axios.post('/api/login', { username, password })
-        this.token = response.data.token
-        this.user = response.data.user
+        const data = await userApi.login(username, password)
+        this.token = data.token
+        this.user = data.user
         localStorage.setItem('token', this.token)
         localStorage.setItem('user', JSON.stringify(this.user))
         axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`
@@ -39,8 +40,7 @@ export const useUserStore = defineStore('user', {
 
     async register(username, password) {
       try {
-        const response = await axios.post('/api/register', { username, password })
-        return response.data
+        return await userApi.register(username, password)
       } catch (error) {
         throw error.response?.data?.error || '注册失败'
       }
@@ -56,7 +56,7 @@ export const useUserStore = defineStore('user', {
 
     async updatePassword(oldPassword, newPassword) {
       try {
-        await axios.put('/api/user/password', { old_password: oldPassword, new_password: newPassword })
+        await userApi.updatePassword(oldPassword, newPassword)
         return true
       } catch (error) {
         throw error.response?.data?.error || '更新密码失败'
@@ -65,8 +65,7 @@ export const useUserStore = defineStore('user', {
 
     async fetchUsers() {
       try {
-        const response = await axios.get('/api/admin/users')
-        return response.data
+        return await userApi.fetchUsers()
       } catch (error) {
         throw error.response?.data?.error || '获取用户列表失败'
       }
@@ -74,8 +73,7 @@ export const useUserStore = defineStore('user', {
 
     async createUser(username, password) {
       try {
-        const response = await axios.post('/api/admin/users', { username, password })
-        return response.data
+        return await userApi.createUser(username, password)
       } catch (error) {
         throw error.response?.data?.error || '创建用户失败'
       }
@@ -83,8 +81,7 @@ export const useUserStore = defineStore('user', {
 
     async updateUser(id, data) {
       try {
-        const response = await axios.put(`/api/admin/users/${id}`, data)
-        return response.data
+        return await userApi.updateUser(id, data)
       } catch (error) {
         throw error.response?.data?.error || '更新用户失败'
       }
@@ -92,8 +89,7 @@ export const useUserStore = defineStore('user', {
 
     async deleteUser(id) {
       try {
-        const response = await axios.delete(`/api/admin/users/${id}`)
-        return response.data
+        return await userApi.deleteUser(id)
       } catch (error) {
         throw error.response?.data?.error || '删除用户失败'
       }
@@ -101,26 +97,9 @@ export const useUserStore = defineStore('user', {
 
     async resetUserPassword(id) {
       try {
-        const response = await axios.post(`/api/admin/users/${id}/reset-password`)
-        return response.data
+        return await userApi.resetUserPassword(id)
       } catch (error) {
         throw error.response?.data?.error || '重置密码失败'
-      }
-    },
-
-    async getSysInfo() {
-      try {
-        const response = await axios.get('/api/sysinfo')
-        return {
-          allowRegistration: response.data.allowRegistration,
-          systemName: response.data.systemName || '后台管理系统'
-        }
-      } catch (error) {
-        console.error('获取系统信息失败:', error)
-        return {
-          allowRegistration: false,
-          systemName: '后台管理系统'
-        }
       }
     }
   }

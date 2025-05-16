@@ -25,17 +25,21 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useSystemStore } from '@/stores/system'
 import { ElMessage } from 'element-plus'
 import AuthLayout from '@/components/AuthLayout.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
+const systemStore = useSystemStore()
 const formRef = ref(null)
 const loading = ref(false)
-const allowRegistration = ref(false)
+
+// 使用计算属性获取注册状态
+const allowRegistration = computed(() => systemStore.allowRegistration)
 
 const form = reactive({
   username: '',
@@ -46,19 +50,6 @@ const rules = {
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
 }
-
-onMounted(async () => {
-  try {
-    // 获取系统信息
-    const sysInfo = await userStore.getSysInfo()
-    allowRegistration.value = sysInfo.allowRegistration
-    console.log('Registration status:', allowRegistration.value)
-  } catch (error) {
-    console.error('获取系统信息失败:', error)
-    ElMessage.error('获取系统信息失败')
-    allowRegistration.value = false
-  }
-})
 
 const handleLogin = async () => {
   if (!formRef.value) return

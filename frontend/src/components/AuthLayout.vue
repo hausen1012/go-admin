@@ -22,9 +22,9 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useUserStore } from '@/stores/user'
+import { useSystemStore } from '@/stores/system'
 
-const userStore = useUserStore()
+const systemStore = useSystemStore()
 const systemName = ref('后台管理系统')
 const windowWidth = ref(window.innerWidth)
 const breakpointMedium = 992
@@ -41,7 +41,7 @@ const handleResize = () => {
 onMounted(async () => {
   window.addEventListener('resize', handleResize)
   try {
-    const sysInfo = await userStore.getSysInfo()
+    const sysInfo = await systemStore.getSysInfo()
     systemName.value = sysInfo.systemName
   } catch (error) {
     console.error('获取系统信息失败:', error)

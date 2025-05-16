@@ -117,14 +117,15 @@
     <el-dialog
       v-model="passwordDialogVisible"
       title="修改密码"
-      width="400px"
+      :width="isMobile ? '90%' : '400px'"
       :close-on-click-modal="false"
+      class="password-dialog"
     >
       <el-form
         ref="passwordFormRef"
         :model="passwordForm"
         :rules="passwordRules"
-        label-width="100px"
+        label-width="auto"
       >
         <el-form-item label="原密码" prop="oldPassword">
           <el-input
@@ -527,5 +528,33 @@ const handleChangePassword = async () => {
   height: 32px;
   margin-right: 10px;
   vertical-align: middle;
+}
+
+/* 密码弹窗响应式样式 */
+.password-dialog :deep(.el-dialog__body) {
+  padding: 20px;
+}
+
+@media screen and (max-width: 768px) {
+  .password-dialog :deep(.el-dialog__body) {
+    padding: 15px;
+  }
+
+  .password-dialog :deep(.el-form-item) {
+    margin-bottom: 15px;
+  }
+
+  .password-dialog :deep(.el-form-item__label) {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .password-dialog :deep(.el-input__wrapper) {
+    font-size: 14px;
+  }
+
+  .password-dialog :deep(.el-dialog__footer) {
+    padding: 10px 15px 15px;
+  }
 }
 </style> 
