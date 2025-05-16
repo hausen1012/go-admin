@@ -17,7 +17,12 @@ type Option struct {
 	DeletedAt       gorm.DeletedAt `gorm:"index"`
 }
 
-type UpdateOptionRequest struct {
+type UpdateOptionsRequest struct {
+	Options []OptionUpdate `json:"options" binding:"required,dive"`
+}
+
+type OptionUpdate struct {
+	OptionName  string `json:"option_name" binding:"required"`
 	OptionValue string `json:"option_value" binding:"required"`
 }
 

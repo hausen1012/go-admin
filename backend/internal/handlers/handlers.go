@@ -7,6 +7,7 @@ import (
 	"backend/internal/config"
 	"backend/internal/models"
 	"errors"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -370,22 +371,34 @@ func (h *Handler) GetOption(c *gin.Context) {
 	c.JSON(http.StatusOK, option)
 }
 
-func (h *Handler) UpdateOption(c *gin.Context) {
-	name := c.Param("name")
-	var option models.Option
-	if err := h.db.Where("option_name = ?", name).First(&option).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "配置项不存在"})
-		return
-	}
-
-	var req models.UpdateOptionRequest
+// UpdateOptions 批量更新配置
+func (h *Handler) UpdateOptions(c *gin.Context) {
+	var req models.UpdateOptionsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求数据"})
 		return
 	}
 
-	if err := h.db.Model(&option).Update("option_value", req.OptionValue).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新配置失败"})
+	// 开始事务
+	err := h.db.Transaction(func(tx *gorm.DB) error {
+		for _, update := range req.Options {
+			var option models.Option
+			if err := tx.Where("option_name = ?", update.OptionName).First(&option).Error; err != nil {
+				if err == gorm.ErrRecordNotFound {
+					return fmt.Errorf("配置项 %s 不存在", update.OptionName)
+				}
+				return err
+			}
+
+			if err := tx.Model(&option).Update("option_value", update.OptionValue).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("更新配置失败: %v", err)})
 		return
 	}
 

@@ -4,6 +4,13 @@
       <template #header>
         <div class="card-header">
           <span>系统设置</span>
+          <el-button 
+            type="primary" 
+            @click="handleSaveSettings" 
+            :loading="loading"
+          >
+            保存设置
+          </el-button>
         </div>
       </template>
 
@@ -21,7 +28,7 @@
           <el-input
             v-model="settings.system_name"
             placeholder="请输入系统名称"
-            @change="value => handleSettingChange('system_name', value)"
+            @change="handleFormChange"
           />
           <span class="form-item-tip">设置系统的显示名称（最多6个字符）</span>
         </el-form-item>
@@ -30,7 +37,7 @@
         <el-form-item label="允许注册">
           <el-switch
             v-model="settings.allow_registration"
-            @change="value => handleSettingChange('allow_registration', value.toString())"
+            @change="handleFormChange"
           />
           <span class="form-item-tip">开启后允许新用户自行注册账号</span>
         </el-form-item>
@@ -50,7 +57,8 @@ const systemStore = useSystemStore()
 const settingsFormRef = ref(null)
 const settings = ref({
   system_name: '',
-  allow_registration: false
+  allow_registration: false,
+  hasChanges: false // 用于追踪是否有更改
 })
 
 // 表单验证规则
@@ -86,34 +94,45 @@ const fetchSettings = async () => {
   }
 }
 
-// 更新配置
-const handleSettingChange = async (optionName, value) => {
+// 表单变更处理
+const handleFormChange = () => {
+  settings.value.hasChanges = true
+}
+
+// 保存所有设置
+const handleSaveSettings = async () => {
   try {
-    // 如果是系统名称，先进行表单验证
-    if (optionName === 'system_name') {
-      try {
-        await settingsFormRef.value.validateField('system_name')
-      } catch (validationError) {
-        // 验证失败，直接返回
-        return
-      }
-    }
+    // 表单验证
+    await settingsFormRef.value.validate()
     
     loading.value = true
-    await axios.put(`/api/admin/options/${optionName}`, {
-      option_value: value
+    const settingsData = [
+      {
+        option_name: 'system_name',
+        option_value: settings.value.system_name
+      },
+      {
+        option_name: 'allow_registration',
+        option_value: settings.value.allow_registration.toString()
+      }
+    ]
+
+    await axios.put('/api/admin/options', {
+      options: settingsData
     })
     
     // 更新 store 中的配置
-    if (optionName === 'system_name') {
-      systemStore.systemName = value
-    } else if (optionName === 'allow_registration') {
-      systemStore.allowRegistration = value === 'true'
-    }
+    systemStore.systemName = settings.value.system_name
+    systemStore.allowRegistration = settings.value.allow_registration
     
+    settings.value.hasChanges = false
     ElMessage.success('设置更新成功')
   } catch (error) {
-    ElMessage.error('设置更新失败')
+    if (error?.message) {
+      ElMessage.error(error.message)
+    } else {
+      ElMessage.error('设置更新失败')
+    }
     console.error('设置更新失败:', error)
   } finally {
     loading.value = false
@@ -160,5 +179,11 @@ onMounted(() => {
 
 :deep(.el-input__wrapper) {
   margin-top: 0;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 </style> 

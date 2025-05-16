@@ -46,7 +46,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 		admin.POST("/users/:id/reset-password", h.ResetUserPassword)
 		admin.GET("/options", h.GetOptions)
 		admin.GET("/options/:name", h.GetOption)
-		admin.PUT("/options/:name", h.UpdateOption)
+		admin.PUT("/options", h.UpdateOptions)
 	}
 
 	return r
