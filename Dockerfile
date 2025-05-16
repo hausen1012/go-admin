@@ -7,7 +7,7 @@ COPY frontend/ .
 RUN npm run build
 
 # 构建后端
-FROM golang:1.21-alpine as backend-builder
+FROM golang:1.23-alpine as backend-builder
 WORKDIR /app/backend
 
 # 安装编译工具
