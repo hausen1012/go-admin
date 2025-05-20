@@ -11,5 +11,11 @@ export const systemApi = {
   getSysInfo: async () => {
     const response = await axios.get('/api/sysinfo')
     return response.data
+  },
+
+  // 更新系统设置
+  updateSystemSettings: async (options) => {
+    const response = await axios.put('/api/admin/options', { options })
+    return response.data
   }
 } 

@@ -196,10 +196,6 @@ const closeMenu = () => {
   menuVisible.value = false
 }
 
-onMounted(() => {
-  systemStore.getSysInfo()
-})
-
 const currentRoute = computed(() => {
   const routeMap = {
     '/': '首页',

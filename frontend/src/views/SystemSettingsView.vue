@@ -49,7 +49,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import axios from 'axios'
 import { useSystemStore } from '@/stores/system'
 
 const loading = ref(false)
@@ -73,17 +72,14 @@ const rules = {
 const fetchSettings = async () => {
   try {
     loading.value = true
-    const response = await axios.get('/api/admin/options')
-    const options = response.data
+    const options = await systemStore.loadSystemSettings()
     
     // 将配置数据转换为表单数据
     options.forEach(option => {
       if (option.OptionName === 'system_name') {
         settings.value.system_name = option.OptionValue
-        systemStore.systemName = option.OptionValue
       } else if (option.OptionName === 'allow_registration') {
         settings.value.allow_registration = option.OptionValue === 'true'
-        systemStore.allowRegistration = option.OptionValue === 'true'
       }
     })
   } catch (error) {
@@ -117,14 +113,7 @@ const handleSaveSettings = async () => {
       }
     ]
 
-    await axios.put('/api/admin/options', {
-      options: settingsData
-    })
-    
-    // 更新 store 中的配置
-    systemStore.systemName = settings.value.system_name
-    systemStore.allowRegistration = settings.value.allow_registration
-    
+    await systemStore.updateSystemSettings(settingsData)
     settings.value.hasChanges = false
     ElMessage.success('设置更新成功')
   } catch (error) {
